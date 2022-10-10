@@ -1,4 +1,4 @@
-FROM node:5.11.0-slim
+FROM node:16.17.1-slim
 
 WORKDIR /app
 
@@ -12,5 +12,6 @@ ADD . /app
 
 EXPOSE 80
 ENV PORT 80
+ENV OTEL_SERVICE_NAME=account-summary
 
-CMD ["node", "server.js"]
+CMD ["node", "--require", "./otlp.js", "server.js"]

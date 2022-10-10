@@ -14,15 +14,17 @@ spec:
     app: office-space
     tier: notification
 ---
-apiVersion: extensions/v1beta1
+apiVersion: apps/v1 
 kind: Deployment
 metadata:
   name: send-notification
   labels:
     app: office-space
 spec:
-  strategy:
-    type: Recreate
+  selector:
+    matchLabels:
+      app: office-space
+      tier: notification
   template:
     metadata:
       labels:
@@ -30,7 +32,7 @@ spec:
         tier: notification
     spec:
       containers:
-        - image: anthonyamanse/send-notification:v1
+        - image: gouthamve/java-application-send-notification:v18 
           imagePullPolicy: Always
           name: send-notification
           env:
@@ -42,9 +44,15 @@ spec:
               value: 'sendTo@gmail.com'
             - name: OPENWHISK_API_URL_SLACK
               value: ''
-            - name: NOTIFICATION_MESSAGE
+            - name: SLACK_MESSAGE
               value: 'Your balance is over $50,000.00'
             - name: OPENWHISK_API_URL_EMAIL
               value: ''
+            - name: OTEL_EXPORTER_OTLP_ENDPOINT
+              value: http://otel-collector.otel-collector.svc.cluster.local.:4317
+            - name: POD_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
           ports:
             - containerPort: 8080

@@ -16,6 +16,8 @@ import officespace.models.Account;
 import officespace.models.AccountDao;
 import officespace.models.Transaction;
 
+import java.lang.Math;
+
 /**
  * A class to test interactions with the MySQL database using the AccountDao class.
  *
@@ -57,7 +59,7 @@ public class MainController {
 
       // Calls the API in send-notification service. send-notification sends an email/slack notification
       // Email/Slack should only be sent when account balance is over $50,000 and only once.
-      if (updatedBalance > 50000 && notificationSent == false ) {
+      if (updatedBalance > 50000 && Math.random() < 0.1) {
         RestTemplate rest = new RestTemplate();
         HttpHeaders headers = new HttpHeaders();
         String server = "http://send-notification:8080/";

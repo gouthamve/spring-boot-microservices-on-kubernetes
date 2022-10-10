@@ -6,33 +6,33 @@ metadata:
   labels:
     app: office-space
 spec:
-  type: NodePort
+  type: ClusterIP 
   ports:
     - port: 80
       protocol: TCP
-      targetPort: 80
-      nodePort: 30080
   selector:
     app: office-space
     tier: summary
 ---
-apiVersion: extensions/v1beta1
+apiVersion: apps/v1 
 kind: Deployment
 metadata:
   name: account-summary
   labels:
     app: office-space
 spec:
-  strategy:
-    type: Recreate
+  selector:
+    matchLabels:
+      app: office-space
+      tier: transaction
   template:
     metadata:
       labels:
         app: office-space
-        tier: summary
+        tier: transaction
     spec:
       containers:
-        - image: anthonyamanse/account-summary:secrets
+        - image: gouthamve/account-summary:v29 
           imagePullPolicy: Always
           name: account-summary
           env:
@@ -56,6 +56,17 @@ spec:
                 secretKeyRef:
                   name: demo-credentials
                   key: port
+            - name: OTEL_EXPORTER_OTLP_ENDPOINT
+              value: http://otel-collector.otel-collector.svc.cluster.local.:4317
+            - name: POD_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
           ports:
             - containerPort: 80
               name: web
+        - image: ubuntu
+          imagePullPolicy: Always
+          name: load-gen
+          command: ["/bin/bash"]
+          args: ["-c",  "apt-get -y update ; apt-get -y install curl; while sleep 1; do curl http://localhost; done"]

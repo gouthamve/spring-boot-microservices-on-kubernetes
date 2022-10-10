@@ -9,12 +9,14 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.client.RestTemplate;
 
@@ -43,12 +45,11 @@ public class TriggerEmail {
 	private String password;
 
 	@RequestMapping(path = "/email", method = RequestMethod.POST)
-	private String sendEmail(@RequestBody Map<String, Object> payload) {
+	private ResponseEntity<String> sendEmail(@RequestBody Map<String, Object> payload) {
 		MimeMessage mail = mailSender.createMimeMessage();
 		MimeMessageHelper helper = new MimeMessageHelper(mail);
 
 		try {
-
 			if (!receiver.isEmpty() && !sender.isEmpty() && !password.isEmpty()) {
 				if (email_openwhisk_url.isEmpty()) {
 						helper.setTo(receiver);
@@ -57,7 +58,10 @@ public class TriggerEmail {
 						helper.setSubject("Office-Space Notification");
 						helper.setText("Account Balance is now over $50,000. " + payload.get("balance"));
 						mailSender.send(mail);
-						return "{\"message\": \"OK sent email via client\"}";
+
+						return ResponseEntity
+        					.status(HttpStatus.OK)
+        					.body("{\"message\": \"OK sent email via client\"}");
 				}
 				else {
 					RestTemplate rest = new RestTemplate();
@@ -69,15 +73,21 @@ public class TriggerEmail {
 
 					HttpEntity<String> requestEntity = new HttpEntity<String>(json, headers);
 					ResponseEntity<String> responseEntity = rest.exchange(server, HttpMethod.POST, requestEntity, String.class);
-					return "{\"message\": \"OK sent email via openwhisk\"}";
+					
+						return ResponseEntity
+        					.status(HttpStatus.OK)
+        					.body("{\"message\": \"OK sent email via openwhisk\"}");
 				}
 			} else {
-				return "{\"message\": \"No email configuration specified. No email sent.\"}";
+				return ResponseEntity
+					.status(HttpStatus.INTERNAL_SERVER_ERROR)
+					.body("{\"message\": \"No email configuration specified. No email sent.\"}");
 			}
 		} catch (Exception e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
-			return "{\"message\": \"Error in sending email\"}";
+			return ResponseEntity
+				.status(HttpStatus.INTERNAL_SERVER_ERROR)
+				.body("{\"message\": \"Error in sending email\"}");
 		}
 	}
 
